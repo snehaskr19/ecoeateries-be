@@ -20,7 +20,9 @@ def register():
                 "restaurantLocation": {"type": "string"}
             },
         }
+        print(request)
         request_json = request.json
+        print(request_json)
         jsonschema.validate(instance=request_json, schema=reg_schema)
         email = request_json['email']
         password = sha256_crypt.encrypt(request_json['password'])
@@ -84,22 +86,12 @@ def login():
 
 
 @app.route('/restaurant-info', methods=['GET'])
-def get_restaurant_info():
-    try:
-        res_schema = {
-            "type": "object",
-            "properties": {
-                "userId": {"type": "string"},
-            },
-        }
-        req_json = request.json
-        user_id = req_json['userId']
-        jsonschema.validate(instance=req_json, schema=res_schema)
-        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-        restaurant = Restaurant.query.filter_by(restaurantId=restaurant_id).first()
-    except jsonschema.exceptions.ValidationError as err:
-        print(err)
-        return jsonify({"error", "invalid request"})
+def get_user_restaurant_info():
+
+    user_id = request.args.get('userId')
+    print(user_id)
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+    restaurant = Restaurant.query.filter_by(restaurantId=restaurant_id).first()
     return jsonify(
         {
             'restaurantName': restaurant.restaurantName,
@@ -108,21 +100,59 @@ def get_restaurant_info():
     )
 
 
+@app.route('/report', methods=['GET'])
+def get_report():
+    user_id = request.args.get('userId')
+    user_goals = mng_goals.get_user_goals(user_id)
+    return jsonify(mng_goals.get_score_report(user_goals))
+
+
+@app.route('/restaurant-info', methods=['GET'])
+def get_all_restaurant_info():
+    restaurants = User.query \
+        .join(Restaurant, Restaurant.restaurantId == User.restaurantId) \
+        .add_columns(User.userId, Restaurant.restaurantName, Restaurant.restaurantLocation) \
+        .all()
+    print(restaurants)
+    restaurant_list = []
+    for restaurant in restaurants:
+        restaurant_dict = {
+            "userId": restaurant.userId, 
+            "restaurantName": restaurant.restaurantName, 
+            "restaurantLocation": restaurant.restaurantLocation
+        }
+        restaurant_list.append(restaurant_dict)
+    return jsonify({"restaurants": restaurant_list})
+
+
 @app.route('/user/goal', methods=['POST'])
 def update_user_goal_status():
     try:
+        status_schema = {
+            "type": "object",
+            "properties": {
+                "goalId": {"type": "number"},
+                "userId": {"type": "number"},
+                "newStatus": {"type": "string"}
+            },
+        }
         request_json = request.json
+        jsonschema.validate(instance=request_json, schema=status_schema)
         user_id = request_json['userId']
         goal_id = request_json['goalId']
         new_status = request_json['newStatus']
-        connector = Connector.query.filter_by(userId=user_id, goalId=goal_id).first()
+        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+        connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
         connector.status = new_status
+        db.session.add(connector)
+        db.session.commit()
     except jsonschema.exceptions.ValidationError as err:
         print(err)
         return jsonify({"error", "invalid request"})
     return jsonify(
         {'message': 'goal successfully updated'}
     )
+
 
 
 
