@@ -76,5 +76,8 @@ def login():
         return jsonify({"access_token": access_token,
                         "refresh_token": refresh_token,
                         "user_id": current_user.userId})
+    except jsonschema.exceptions.ValidationError as err:
+        print(err)
+        return jsonify({"error", "invalid request"})
     except:
         return jsonify({"error", "Cannot login user"})
