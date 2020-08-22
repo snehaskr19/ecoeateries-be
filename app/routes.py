@@ -156,6 +156,17 @@ def updateUserGoalStatus():
             goalList.append(goalDict)
         return jsonify(goalList)
 
+@app.route('/user/exists', methods=['GET'])
+def checkIfUserExists():
+    user_id = request.args.get('userId')
+    exists = db.session.query(db.exists().where(User.userId == user_id)).scalar()
+    print(exists)
+    if exists:
+        return jsonify({"exists": "true"})
+    else:
+        return jsonify({"exists": "false"})
+
+
 
 
 
