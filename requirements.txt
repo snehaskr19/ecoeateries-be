@@ -7,7 +7,6 @@ Flask-SQLAlchemy==2.4.4
 itsdangerous==1.1.0
 Jinja2==2.11.2
 jsonschema==3.2.0
-MarkupSafe @ file:///opt/concourse/worker/volumes/live/cb778296-98db-45ad-411e-6f726e102dc3/volume/markupsafe_1594371638608/work
 passlib==1.7.2
 PyJWT==1.7.1
 PyMySQL==0.10.0
