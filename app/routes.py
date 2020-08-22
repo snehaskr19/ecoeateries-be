@@ -29,6 +29,7 @@ def register():
         if User.query.filter_by(email=email).first():
             return jsonify({"error": "User already exists"})
         else:
+            # TODO: check whether restaurant exists before adding it to db for future mvp
             restaurant = Restaurant(restaurantName=restaurant_name, restaurantLocation=restaurant_location)
             db.session.add(restaurant)
             db.session.commit()
@@ -36,6 +37,9 @@ def register():
             user = User(email=email, password=password, restaurantId=restaurant.restaurantId)
             db.session.add(user)
             db.session.commit()
+            
+            mng_goals.populate_connector(user.userId)
+
             return jsonify({"message": "user successfully created"})
     except jsonschema.exceptions.ValidationError as err:
         print(err)
@@ -69,7 +73,6 @@ def login():
 
         access_token = create_access_token(identity=current_user.userId)
         refresh_token = create_refresh_token(identity=current_user.userId)
-        mng_goals.populate_connector(current_user.userId)
         return jsonify({"access_token": access_token,
                         "refresh_token": refresh_token,
                         "user_id": current_user.userId})

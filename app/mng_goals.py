@@ -9,14 +9,17 @@ def get_all_goals():
         .all()
 
 def populate_connector(user_id):
+    """
+        when user registers, all the static goals for the user are automatically set to have a status of 0
+    """
     goals = get_all_goals()
     
-    restaurant_id = User.query.filter_by(userId=user_id).all().id
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
 
     for goal in goals:
-        connector = Connector(restaurantId=restaurant_id, goalId=goal.id, status=0.0)
+        connector = Connector(restaurantId=restaurant_id, goalId=goal.goalId, status=0.0)
         db.session.add(connector)
-        db.session.commit
+        db.session.commit()
 
         
     
