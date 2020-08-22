@@ -1,7 +1,7 @@
 from app import app
 from app import db
 from app import mng_goals
-from app.models import User, Restaurant
+from app.models import User, Restaurant, Connector
 from flask import request, jsonify
 from passlib.hash import sha256_crypt
 from flask_jwt_extended import create_access_token, create_refresh_token
@@ -81,3 +81,34 @@ def login():
         return jsonify({"error", "invalid request"})
     except:
         return jsonify({"error", "Cannot login user"})
+
+@app.route('/restaurant-info', methods=['GET'])
+def getRestaurantInfo():
+    user_id = request.args.get('userId')
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+    restaurant = Restaurant.query.filter_by(restaurantId=restaurant_id).first()
+    return jsonify(
+        {
+            'restaurantName': restaurant.restaurantName,
+            'restaurantLocation': restaurant.restaurantLocation
+        }
+    )
+
+@app.route('/user/goal', methods=['POST'])
+def updateUserGoalStatus():
+    request_json = request.json
+    user_id = request_json['userId']
+    goal_id = request_json['goalId']
+    new_status = request_json['newStatus']
+    connector = Connector.query.filter_by(userId=userId, goalId=goalId).first()
+    connector.status = new_status
+    return jsonify(
+        {'message': 'goal successfully updated'}
+    )
+
+
+
+
+
+
+
