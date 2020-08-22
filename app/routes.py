@@ -102,7 +102,7 @@ def getReport():
 
 
 
-@app.route('/restaurant-info', methods=['GET'])
+@app.route('/restaurants', methods=['GET'])
 def getAllRestaurantInfo():
     restaurants = User.query \
         .join(Restaurant, Restaurant.restaurantId==User.restaurantId) \
