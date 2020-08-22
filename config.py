@@ -1,9 +1,10 @@
 import os
 
+
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or os.urandom (256)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
+    JWT_SECRET_KEY = os.urandom(256)
     CLOUDSQL_USER = 'root'
     CLOUDSQL_PASSWORD = 'hax4D3People!'
     CLOUDSQL_DATABASE = 'hackforthepeople'
