@@ -82,11 +82,24 @@ def login():
     except:
         return jsonify({"error", "Cannot login user"})
 
+
 @app.route('/restaurant-info', methods=['GET'])
-def getRestaurantInfo():
-    user_id = request.args.get('userId')
-    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-    restaurant = Restaurant.query.filter_by(restaurantId=restaurant_id).first()
+def get_restaurant_info():
+    try:
+        res_schema = {
+            "type": "object",
+            "properties": {
+                "userId": {"type": "string"},
+            },
+        }
+        req_json = request.json
+        user_id = req_json['userId']
+        jsonschema.validate(instance=req_json, schema=res_schema)
+        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+        restaurant = Restaurant.query.filter_by(restaurantId=restaurant_id).first()
+    except jsonschema.exceptions.ValidationError as err:
+        print(err)
+        return jsonify({"error", "invalid request"})
     return jsonify(
         {
             'restaurantName': restaurant.restaurantName,
@@ -94,14 +107,19 @@ def getRestaurantInfo():
         }
     )
 
+
 @app.route('/user/goal', methods=['POST'])
-def updateUserGoalStatus():
-    request_json = request.json
-    user_id = request_json['userId']
-    goal_id = request_json['goalId']
-    new_status = request_json['newStatus']
-    connector = Connector.query.filter_by(userId=userId, goalId=goalId).first()
-    connector.status = new_status
+def update_user_goal_status():
+    try:
+        request_json = request.json
+        user_id = request_json['userId']
+        goal_id = request_json['goalId']
+        new_status = request_json['newStatus']
+        connector = Connector.query.filter_by(userId=user_id, goalId=goal_id).first()
+        connector.status = new_status
+    except jsonschema.exceptions.ValidationError as err:
+        print(err)
+        return jsonify({"error", "invalid request"})
     return jsonify(
         {'message': 'goal successfully updated'}
     )

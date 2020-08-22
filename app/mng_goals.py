@@ -23,12 +23,4 @@ def populate_connector(user_id):
         db.session.add(connector)
         db.session.commit()
 
-def generate_report():
 
-    category_1 = []
-    category_2 = []
-    category_3 = []
-    category_4 =[]
-    category_5 = [3, 5, 4, 5, 3]
-    goals = user_goals()
-    for goal in goals:
