@@ -1,5 +1,6 @@
 from app import app
 from app import db
+from app import mng_goals
 from app.models import User, Restaurant
 from flask import request, jsonify
 from passlib.hash import sha256_crypt
@@ -28,6 +29,7 @@ def register():
         if User.query.filter_by(email=email).first():
             return jsonify({"error": "User already exists"})
         else:
+            # TODO: check whether restaurant exists before adding it to db for future mvp
             restaurant = Restaurant(restaurantName=restaurant_name, restaurantLocation=restaurant_location)
             db.session.add(restaurant)
             db.session.commit()
@@ -35,6 +37,9 @@ def register():
             user = User(email=email, password=password, restaurantId=restaurant.restaurantId)
             db.session.add(user)
             db.session.commit()
+            
+            mng_goals.populate_connector(user.userId)
+
             return jsonify({"message": "user successfully created"})
     except jsonschema.exceptions.ValidationError as err:
         print(err)
