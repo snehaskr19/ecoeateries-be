@@ -106,6 +106,16 @@ def get_report():
     return jsonify(mng_goals.get_score_report(user_goals))
 
 
+@app.route('/user/timestamp', methods=['POST', 'GET'])
+def access_timestamp():
+    if request.method == 'POST':
+        return update_timestamp(request)
+    else:
+        user_id = request.args.get('userId')
+        timestamp = User.query.filter_by(userId=user_id).first().timestamp
+        return jsonify({"timeStamp": timestamp})
+
+
 @app.route('/restaurant-info', methods=['GET'])
 def get_all_restaurant_info():
     restaurants = User.query \
@@ -125,35 +135,50 @@ def get_all_restaurant_info():
 
 
 @app.route('/user/goals', methods=['POST', 'GET'])
-def update_user_goal_status():
+def access_goals():
     if request.method == 'POST':
-        try:
-            status_schema = {
-                "type": "object",
-                "properties": {
-                    "goalId": {"type": "number"},
-                    "userId": {"type": "number"},
-                    "newStatus": {"type": "string"}
-                },
-            }
-            request_json = request.json
-            jsonschema.validate(instance=request_json, schema=status_schema)
-            user_id = request_json['userId']
-            goal_id = request_json['goalId']
-            new_status = request_json['newStatus']
-            restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-            connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
-            connector.status = float(new_status)
-            db.session.add(connector)
-            db.session.commit()
-            return jsonify(
-                {'message': 'goal successfully updated'}
-            )
-        except jsonschema.exceptions.ValidationError as err:
-            print(err)
-        return jsonify({"error", "invalid request"})
+        return update_goals(request)
     else:
         return get_goals(request)
+
+
+@app.route('/user/exists', methods=['GET'])
+def check_if_user_exists():
+    user_id = request.args.get('userId')
+    exists = db.session.query(db.exists().where(User.userId == user_id)).scalar()
+    print(exists)
+    if exists:
+        return jsonify({"exists": "true"})
+    else:
+        return jsonify({"exists": "false"})
+
+
+def update_goals(req):
+    try:
+        status_schema = {
+            "type": "object",
+            "properties": {
+                "goalId": {"type": "number"},
+                "userId": {"type": "number"},
+                "newStatus": {"type": "string"}
+            },
+        }
+        request_json = req.json
+        jsonschema.validate(instance=request_json, schema=status_schema)
+        user_id = request_json['userId']
+        goal_id = request_json['goalId']
+        new_status = request_json['newStatus']
+        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+        connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
+        connector.status = float(new_status)
+        db.session.add(connector)
+        db.session.commit()
+        return jsonify(
+            {'message': 'goal successfully updated'}
+        )
+    except jsonschema.exceptions.ValidationError as err:
+        print(err)
+    return jsonify({"error", "invalid request"})
 
 
 def get_goals(req):
@@ -177,12 +202,26 @@ def get_goals(req):
     return jsonify({'goalList': goal_list})
 
 
-@app.route('/user/exists', methods=['GET'])
-def check_if_user_exists():
-    user_id = request.args.get('userId')
-    exists = db.session.query(db.exists().where(User.userId == user_id)).scalar()
-    print(exists)
-    if exists:
-        return jsonify({"exists": "true"})
-    else:
-        return jsonify({"exists": "false"})
+def update_timestamp(req):
+    try:
+        ts_schema = {
+            "type": "object",
+            "properties": {
+                "userId": {"type": "number"},
+                "timeStamp": {"type": "string"}
+            },
+        }
+        req_json = req.json
+        jsonschema.validate(instance=req_json, schema=ts_schema)
+        user_id = req_json['userId']
+        user = User.query.filter_by(userId=user_id).first()
+        time_stamp = req_json['timeStamp']
+        user.timestamp = time_stamp
+        db.session.add(user)
+        db.session.commit()
+        return jsonify(
+            {'message': 'timestamp successfully updated'}
+        )
+    except jsonschema.ValidationError as err:
+        print(err)
+        return jsonify({"error": "invalid request"})
