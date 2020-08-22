@@ -1,5 +1,6 @@
 from app import app
 from app import db
+from app import mng_goals
 from app.models import User, Restaurant
 from flask import request, jsonify
 from passlib.hash import sha256_crypt
@@ -43,6 +44,7 @@ def login():
 
         access_token = create_access_token(identity=current_user.userId)
         refresh_token = create_refresh_token(identity=current_user.userId)
+        mng_goals.populate_connector(current_user.userId)
         return jsonify({"access_token": access_token,
                         "refresh_token": refresh_token,
                         "user_id": current_user.userId})
