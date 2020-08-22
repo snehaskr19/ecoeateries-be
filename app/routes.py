@@ -1,7 +1,7 @@
 from app import app
 from app import db
 from app import mng_goals
-from app.models import User, Restaurant, Connector
+from app.models import User, Restaurant, Connector, Goal, Category
 from flask import request, jsonify
 from passlib.hash import sha256_crypt
 from flask_jwt_extended import create_access_token, create_refresh_token
@@ -121,20 +121,42 @@ def getAllRestaurantInfo():
         restaurantList.append(restaurantDict)
     return jsonify({"restaurants": restaurantList})
 
-@app.route('/user/goal', methods=['POST'])
+@app.route('/user/goal', methods=['POST','GET'])
 def updateUserGoalStatus():
-    request_json = request.json
-    user_id = request_json['userId']
-    goal_id = request_json['goalId']
-    new_status = request_json['newStatus']
-    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-    connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
-    connector.status = new_status
-    db.session.add(connector)
-    db.session.commit()
-    return jsonify(
-        {'message': 'goal successfully updated'}
-    )
+    if request.method == 'POST':
+        request_json = request.json
+        user_id = request_json['userId']
+        goal_id = request_json['goalId']
+        new_status = request_json['newStatus']
+        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+        connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
+        connector.status = float(new_status)
+        db.session.add(connector)
+        db.session.commit()
+        return jsonify(
+            {'message': 'goal successfully updated'}
+        )
+    else:
+        user_id = request.args.get('userId')
+        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+        goals = Connector.query \
+        .filter_by(restaurantId=restaurant_id) \
+        .join(Goal, Goal.goalId == Connector.goalId) \
+        .join(Category, Goal.categoryId == Category.categoryId) \
+        .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName) \
+        .all()
+        goalList = []
+        for goal in goals:
+            goalDict = {
+                'goalName': goal.goalName,
+                'goalId': goal.goalId,
+                'goalStatus': str(goal.status),
+                'goalCategory': goal.categoryName
+            }
+            goalList.append(goalDict)
+        return jsonify(goalList)
+
+
 
 
 
