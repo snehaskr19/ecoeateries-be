@@ -1,7 +1,7 @@
 from app import app
 from app import db
 from app import mng_goals
-from app.models import User, Restaurant, Connector
+from app.models import User, Restaurant, Connector, Goal, Category
 from flask import request, jsonify
 from passlib.hash import sha256_crypt
 from flask_jwt_extended import create_access_token, create_refresh_token
@@ -39,7 +39,7 @@ def register():
             user = User(email=email, password=password, restaurantId=restaurant.restaurantId)
             db.session.add(user)
             db.session.commit()
-            
+
             mng_goals.populate_connector(user.userId)
 
             return jsonify({"message": "user successfully created"})
@@ -87,7 +87,6 @@ def login():
 
 @app.route('/restaurant-info', methods=['GET'])
 def get_user_restaurant_info():
-
     user_id = request.args.get('userId')
     print(user_id)
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
@@ -117,46 +116,73 @@ def get_all_restaurant_info():
     restaurant_list = []
     for restaurant in restaurants:
         restaurant_dict = {
-            "userId": restaurant.userId, 
-            "restaurantName": restaurant.restaurantName, 
+            "userId": restaurant.userId,
+            "restaurantName": restaurant.restaurantName,
             "restaurantLocation": restaurant.restaurantLocation
         }
         restaurant_list.append(restaurant_dict)
     return jsonify({"restaurants": restaurant_list})
 
 
-@app.route('/user/goal', methods=['POST'])
+@app.route('/user/goals', methods=['POST', 'GET'])
 def update_user_goal_status():
-    try:
-        status_schema = {
-            "type": "object",
-            "properties": {
-                "goalId": {"type": "number"},
-                "userId": {"type": "number"},
-                "newStatus": {"type": "string"}
-            },
-        }
-        request_json = request.json
-        jsonschema.validate(instance=request_json, schema=status_schema)
-        user_id = request_json['userId']
-        goal_id = request_json['goalId']
-        new_status = request_json['newStatus']
-        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-        connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
-        connector.status = new_status
-        db.session.add(connector)
-        db.session.commit()
-    except jsonschema.exceptions.ValidationError as err:
-        print(err)
+    if request.method == 'POST':
+        try:
+            status_schema = {
+                "type": "object",
+                "properties": {
+                    "goalId": {"type": "number"},
+                    "userId": {"type": "number"},
+                    "newStatus": {"type": "string"}
+                },
+            }
+            request_json = request.json
+            jsonschema.validate(instance=request_json, schema=status_schema)
+            user_id = request_json['userId']
+            goal_id = request_json['goalId']
+            new_status = request_json['newStatus']
+            restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+            connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
+            connector.status = float(new_status)
+            db.session.add(connector)
+            db.session.commit()
+            return jsonify(
+                {'message': 'goal successfully updated'}
+            )
+        except jsonschema.exceptions.ValidationError as err:
+            print(err)
         return jsonify({"error", "invalid request"})
-    return jsonify(
-        {'message': 'goal successfully updated'}
-    )
+    else:
+        return get_goals(request)
 
 
+def get_goals(req):
+    user_id = req.args.get('userId')
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+    goals = Connector.query \
+        .filter_by(restaurantId=restaurant_id) \
+        .join(Goal, Goal.goalId == Connector.goalId) \
+        .join(Category, Goal.categoryId == Category.categoryId) \
+        .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName) \
+        .all()
+    goal_list = []
+    for goal in goals:
+        goal_dict = {
+            'goalName': goal.goalName,
+            'goalId': goal.goalId,
+            'goalStatus': str(goal.status),
+            'goalCategory': goal.categoryName
+        }
+        goal_list.append(goal_dict)
+    return jsonify({'goalList': goal_list})
 
 
-
-
-
-
+@app.route('/user/exists', methods=['GET'])
+def check_if_user_exists():
+    user_id = request.args.get('userId')
+    exists = db.session.query(db.exists().where(User.userId == user_id)).scalar()
+    print(exists)
+    if exists:
+        return jsonify({"exists": "true"})
+    else:
+        return jsonify({"exists": "false"})
