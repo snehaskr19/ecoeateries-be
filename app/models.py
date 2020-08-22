@@ -1,11 +1,13 @@
 from app import db
 
+
 class User(db.Model):
     __tablename__ = 'users'
     __table_args__ = {
         'autoload': True,
         'autoload_with': db.engine
     }
+
 
 class Category(db.Model):
     __tablename__ = 'categories'
