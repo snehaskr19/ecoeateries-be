@@ -9,6 +9,7 @@ def get_all_goals():
         .add_columns(Goal.goalId, Goal.goalName, Category.categoryName) \
         .all()
 
+
 def get_user_goals(user_id):
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
 
@@ -22,12 +23,11 @@ def get_user_goals(user_id):
         .join(Category, Goal.categoryId == Category.categoryId) \
         .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName, Category.categoryId) \
         .all()
-    
+
     print("goals: ", goals)
-    
+
     goalsPerCategory = {}
 
-        
     for goal in goals:
         goalDict = {
             'goalName': goal.goalName,
@@ -38,8 +38,7 @@ def get_user_goals(user_id):
             goalsPerCategory[goal.categoryName][1].append(goalDict)
         else:
             goalsPerCategory[goal.categoryName] = [goal.categoryId, [goalDict]]
-        
-    
+
     categories = []
 
     for key, val in goalsPerCategory.items():
@@ -52,6 +51,7 @@ def get_user_goals(user_id):
 
     return {'restaurantName': restaurant_name, 'categories': categories}
 
+
 def get_score_report(score_report):
     categories = score_report['categories']
     total_score = 0
@@ -62,13 +62,12 @@ def get_score_report(score_report):
         for goal in goals:
             num_goals += 1
             category_score += float(goal['goalStatus'])
-        category_percent = (category_score/num_goals)*100
+        category_percent = (category_score / num_goals) * 100
         category['categoryScore'] = category_percent
         total_score += category_percent
-    total_score_percent = total_score/len(categories)
+    total_score_percent = total_score / len(categories)
     score_report['restaurantScore'] = total_score_percent
     return score_report
-
 
 
 def populate_connector(user_id):
@@ -85,13 +84,3 @@ def populate_connector(user_id):
         connector = Connector(restaurantId=restaurant_id, goalId=goal.goalId, status=0.0)
         db.session.add(connector)
         db.session.commit()
-
-# def generate_report():
-
-#     category_1 = []
-#     category_2 = []
-#     category_3 = []
-#     category_4 =[]
-#     category_5 = [3, 5, 4, 5, 3]
-#     goals = user_goals()
-#     for goal in goals:

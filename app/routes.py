@@ -20,7 +20,9 @@ def register():
                 "restaurantLocation": {"type": "string"}
             },
         }
+        print(request)
         request_json = request.json
+        print(request_json)
         jsonschema.validate(instance=request_json, schema=reg_schema)
         email = request_json['email']
         password = sha256_crypt.encrypt(request_json['password'])
@@ -37,7 +39,7 @@ def register():
             user = User(email=email, password=password, restaurantId=restaurant.restaurantId)
             db.session.add(user)
             db.session.commit()
-            
+
             mng_goals.populate_connector(user.userId)
 
             return jsonify({"message": "user successfully created"})
@@ -82,9 +84,11 @@ def login():
     except:
         return jsonify({"error", "Cannot login user"})
 
+
 @app.route('/restaurant-info', methods=['GET'])
-def getUserRestaurantInfo():
+def get_user_restaurant_info():
     user_id = request.args.get('userId')
+    print(user_id)
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
     restaurant = Restaurant.query.filter_by(restaurantId=restaurant_id).first()
     return jsonify(
@@ -94,8 +98,9 @@ def getUserRestaurantInfo():
         }
     )
 
+
 @app.route('/report', methods=['GET'])
-def getReport():
+def get_report():
     user_id = request.args.get('userId')
     user_goals = mng_goals.get_user_goals(user_id)
     return jsonify(mng_goals.get_score_report(user_goals))
@@ -105,59 +110,76 @@ def getReport():
 @app.route('/restaurants', methods=['GET'])
 def getAllRestaurantInfo():
     restaurants = User.query \
-        .join(Restaurant, Restaurant.restaurantId==User.restaurantId) \
+        .join(Restaurant, Restaurant.restaurantId == User.restaurantId) \
         .add_columns(User.userId, Restaurant.restaurantName, Restaurant.restaurantLocation) \
         .all()
-    
     print(restaurants)
-
-    restaurantList = []
+    restaurant_list = []
     for restaurant in restaurants:
-        restaurantDict = {
-            "userId": restaurant.userId, 
-            "restaurantName": restaurant.restaurantName, 
+        restaurant_dict = {
+            "userId": restaurant.userId,
+            "restaurantName": restaurant.restaurantName,
             "restaurantLocation": restaurant.restaurantLocation
         }
-        restaurantList.append(restaurantDict)
-    return jsonify({"restaurants": restaurantList})
+        restaurant_list.append(restaurant_dict)
+    return jsonify({"restaurants": restaurant_list})
 
-@app.route('/user/goals', methods=['POST','GET'])
-def updateUserGoalStatus():
+
+@app.route('/user/goals', methods=['POST', 'GET'])
+def update_user_goal_status():
     if request.method == 'POST':
-        request_json = request.json
-        user_id = request_json['userId']
-        goal_id = request_json['goalId']
-        new_status = request_json['newStatus']
-        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-        connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
-        connector.status = float(new_status)
-        db.session.add(connector)
-        db.session.commit()
-        return jsonify(
-            {'message': 'goal successfully updated'}
-        )
+        try:
+            status_schema = {
+                "type": "object",
+                "properties": {
+                    "goalId": {"type": "number"},
+                    "userId": {"type": "number"},
+                    "newStatus": {"type": "string"}
+                },
+            }
+            request_json = request.json
+            jsonschema.validate(instance=request_json, schema=status_schema)
+            user_id = request_json['userId']
+            goal_id = request_json['goalId']
+            new_status = request_json['newStatus']
+            restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+            connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
+            connector.status = float(new_status)
+            db.session.add(connector)
+            db.session.commit()
+            return jsonify(
+                {'message': 'goal successfully updated'}
+            )
+        except jsonschema.exceptions.ValidationError as err:
+            print(err)
+        return jsonify({"error", "invalid request"})
     else:
-        user_id = request.args.get('userId')
-        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-        goals = Connector.query \
+        return get_goals(request)
+
+
+def get_goals(req):
+    user_id = req.args.get('userId')
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+    goals = Connector.query \
         .filter_by(restaurantId=restaurant_id) \
         .join(Goal, Goal.goalId == Connector.goalId) \
         .join(Category, Goal.categoryId == Category.categoryId) \
         .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName) \
         .all()
-        goalList = []
-        for goal in goals:
-            goalDict = {
-                'goalName': goal.goalName,
-                'goalId': goal.goalId,
-                'goalStatus': str(goal.status),
-                'goalCategory': goal.categoryName
-            }
-            goalList.append(goalDict)
-        return jsonify({'goalList': goalList})
+    goal_list = []
+    for goal in goals:
+        goal_dict = {
+            'goalName': goal.goalName,
+            'goalId': goal.goalId,
+            'goalStatus': str(goal.status),
+            'goalCategory': goal.categoryName
+        }
+        goal_list.append(goal_dict)
+    return jsonify({'goalList': goal_list})
+
 
 @app.route('/user/exists', methods=['GET'])
-def checkIfUserExists():
+def check_if_user_exists():
     user_id = request.args.get('userId')
     exists = db.session.query(db.exists().where(User.userId == user_id)).scalar()
     print(exists)
@@ -165,14 +187,3 @@ def checkIfUserExists():
         return jsonify({"exists": "true"})
     else:
         return jsonify({"exists": "false"})
-
-
-
-
-
-
-
-
-
-
-
