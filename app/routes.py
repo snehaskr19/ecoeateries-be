@@ -121,7 +121,7 @@ def getAllRestaurantInfo():
         restaurantList.append(restaurantDict)
     return jsonify({"restaurants": restaurantList})
 
-@app.route('/user/goal', methods=['POST','GET'])
+@app.route('/user/goals', methods=['POST','GET'])
 def updateUserGoalStatus():
     if request.method == 'POST':
         request_json = request.json
@@ -154,7 +154,7 @@ def updateUserGoalStatus():
                 'goalCategory': goal.categoryName
             }
             goalList.append(goalDict)
-        return jsonify(goalList)
+        return jsonify({'goalList': goalList})
 
 @app.route('/user/exists', methods=['GET'])
 def checkIfUserExists():
