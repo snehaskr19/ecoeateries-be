@@ -8,3 +8,5 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 
 jwt = JWTManager(app)
+
+from app import routes, models
