@@ -127,8 +127,11 @@ def updateUserGoalStatus():
     user_id = request_json['userId']
     goal_id = request_json['goalId']
     new_status = request_json['newStatus']
-    connector = Connector.query.filter_by(userId=userId, goalId=goalId).first()
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+    connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
     connector.status = new_status
+    db.session.add(connector)
+    db.session.commit()
     return jsonify(
         {'message': 'goal successfully updated'}
     )
