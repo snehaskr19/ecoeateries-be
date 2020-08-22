@@ -4,11 +4,23 @@ from app.models import User, Restaurant
 from flask import request, jsonify
 from passlib.hash import sha256_crypt
 from flask_jwt_extended import create_access_token, create_refresh_token
+import jsonschema
+
 
 @app.route('/users/register', methods=['POST'])
 def register():
     try:
+        reg_schema = {
+            "type": "object",
+            "properties": {
+                "email": {"type": "string"},
+                "password": {"type": "string"},
+                "restaurantName": {"type": "string"},
+                "restaurantLocation": {"type": "string"}
+            },
+        }
         request_json = request.json
+        jsonschema.validate(instance=request_json, schema=reg_schema)
         email = request_json['email']
         password = sha256_crypt.encrypt(request_json['password'])
         restaurant_name = request_json['restaurantName']
@@ -24,6 +36,9 @@ def register():
             db.session.add(user)
             db.session.commit()
             return jsonify({"message": "user successfully created"})
+    except jsonschema.exceptions.ValidationError as err:
+        print(err)
+        return jsonify({"error", "invalid request"})
     except:
         return jsonify({"error", "cannot register user"})
 
@@ -31,8 +46,18 @@ def register():
 @app.route('/users/login', methods=['POST'])
 def login():
     try:
-        email = request.json['email']
-        password = request.json['password']
+        lgn_schema = {
+            "type": "object",
+            "properties": {
+                "email": {"type": "string"},
+                "password": {"type": "string"},
+            },
+            "required": ["email", "password"]
+        }
+        req_json = request.json
+        jsonschema.validate(instance=req_json, schema=lgn_schema)
+        email = req_json['email']
+        password = req_json['password']
         current_user = User.query.filter_by(email=email).first()
 
         if not current_user:
@@ -47,8 +72,4 @@ def login():
                         "refresh_token": refresh_token,
                         "user_id": current_user.userId})
     except:
-        # frontend will ask to please try again later
         return jsonify({"error", "Cannot login user"})
-
-
-
