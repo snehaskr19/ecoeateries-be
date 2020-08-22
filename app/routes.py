@@ -116,7 +116,7 @@ def access_timestamp():
         return jsonify({"timeStamp": timestamp})
 
 
-@app.route('/restaurant-info', methods=['GET'])
+@app.route('/restaurants', methods=['GET'])
 def get_all_restaurant_info():
     restaurants = User.query \
         .join(Restaurant, Restaurant.restaurantId == User.restaurantId) \
