@@ -83,7 +83,7 @@ def login():
         return jsonify({"error", "Cannot login user"})
 
 @app.route('/restaurant-info', methods=['GET'])
-def getRestaurantInfo():
+def getUserRestaurantInfo():
     user_id = request.args.get('userId')
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
     restaurant = Restaurant.query.filter_by(restaurantId=restaurant_id).first()
@@ -93,6 +93,33 @@ def getRestaurantInfo():
             'restaurantLocation': restaurant.restaurantLocation
         }
     )
+
+@app.route('/report', methods=['GET'])
+def getReport():
+    user_id = request.args.get('userId')
+    user_goals = mng_goals.get_user_goals(user_id)
+    return jsonify(mng_goals.get_score_report(user_goals))
+
+
+
+@app.route('/restaurant-info', methods=['GET'])
+def getAllRestaurantInfo():
+    restaurants = User.query \
+        .join(Restaurant, Restaurant.restaurantId==User.restaurantId) \
+        .add_columns(User.userId, Restaurant.restaurantName, Restaurant.restaurantLocation) \
+        .all()
+    
+    print(restaurants)
+
+    restaurantList = []
+    for restaurant in restaurants:
+        restaurantDict = {
+            "userId": restaurant.userId, 
+            "restaurantName": restaurant.restaurantName, 
+            "restaurantLocation": restaurant.restaurantLocation
+        }
+        restaurantList.append(restaurantDict)
+    return jsonify({"restaurants": restaurantList})
 
 @app.route('/user/goal', methods=['POST'])
 def updateUserGoalStatus():
@@ -105,6 +132,7 @@ def updateUserGoalStatus():
     return jsonify(
         {'message': 'goal successfully updated'}
     )
+
 
 
 
