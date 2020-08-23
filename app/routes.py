@@ -8,7 +8,6 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 import jsonschema
 
 
-# @app.route('/users/register', methods=['POST'])
 @app.route('/register', methods=['POST'])
 def register():
     try:
@@ -51,7 +50,6 @@ def register():
         return jsonify({"error", "cannot register user"})
 
 
-# @app.route('/users/login', methods=['POST'])
 @app.route('/login', methods=['POST'])
 def login():
     try:
@@ -87,7 +85,7 @@ def login():
         return jsonify({"error", "Cannot login user"})
 
 
-@app.route('/restaurant-info', methods=['GET'])
+@app.route('/user/restaurant-info', methods=['GET'])
 def get_user_restaurant_info():
     user_id = request.args.get('userId')
     print(user_id)
@@ -101,14 +99,14 @@ def get_user_restaurant_info():
     )
 
 
-@app.route('/report', methods=['GET'])
+@app.route('/user/report', methods=['GET'])
 def get_report():
     user_id = request.args.get('userId')
     user_goals = mng_goals.get_user_goals(user_id)
     return jsonify(mng_goals.get_score_report(user_goals))
 
 
-@app.route('/timestamp', methods=['POST', 'GET'])
+@app.route('/user/timestamp', methods=['POST', 'GET'])
 def access_timestamp():
     if request.method == 'POST':
         return update_timestamp(request)
