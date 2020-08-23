@@ -1,4 +1,5 @@
 """
+Contains all functions related to managing goals.
 
 """
 from app import db
@@ -9,9 +10,10 @@ from flask import jsonify
 
 def update_goals(req):
     """
+    Helper function for access_goals() in routes.py
 
-    :param req:
-    :return:
+    :param req: request object
+    :return: a JSON object with a success or error message
     """
     try:
         status_schema = {
@@ -42,8 +44,9 @@ def update_goals(req):
 
 def get_all_goals():
     """
+    Helper function for populate_connector()
 
-    :return:
+    :return: the results of a query to get all goals from database
     """
     return Goal.query \
         .join(Category, Goal.categoryId == Category.categoryId) \
@@ -53,9 +56,10 @@ def get_all_goals():
 
 def get_user_goals(req):
     """
+    Helper function for access_goals()
 
-    :param req:
-    :return:
+    :param req: a request object
+    :return: a JSON object with a list of goals for a user 
     """
     user_id = req.args.get('userId')
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
@@ -75,8 +79,9 @@ def get_user_goals(req):
 def query_user_goals(restaurant_id):
     """
     Fetches all user goals from the DB
-    :param restaurant_id:
-    :return:
+
+    :param: a user's restaurant id
+    :return: the result of a query to get all user goals
     """
     goals = Connector.query \
         .filter_by(restaurantId=restaurant_id) \
@@ -89,9 +94,10 @@ def query_user_goals(restaurant_id):
 
 def generate_goal_report(user_id):
     """
+    Helper function for get_report() in routes.py
 
-    :param user_id:
-    :return:
+    :param: the user's id
+    :return: a dict with restaurant name and list of categories
     """
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
     print("restaurantid: ", restaurant_id)
@@ -129,9 +135,10 @@ def generate_goal_report(user_id):
 
 def get_score_report(score_report):
     """
+    Helper function for get_report() in routes.py
 
-    :param score_report:
-    :return:
+    :param: the score_report dict generated from generate_goal_report(user_id)
+    :return: the updated score_report dict
     """
     categories = score_report['categories']
     total_score = 0
@@ -152,7 +159,10 @@ def get_score_report(score_report):
 
 def populate_connector(user_id):
     """
-        when user registers, all the static goals for the user are automatically set to have a status of 0
+        All static goals for the user with id user_id are automatically 
+        set to have a status of 0.0
+
+        :param: the user's id
     """
     goals = get_all_goals()
 

@@ -1,5 +1,5 @@
 """
-
+Contains flask app setup 
 """
 from flask import Flask
 from config import Config

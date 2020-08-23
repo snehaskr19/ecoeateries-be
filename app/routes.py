@@ -1,5 +1,5 @@
 """
-
+Contains all endpoints accessed by frontend to get data from the database 
 """
 from app import app
 from app import db
@@ -176,8 +176,14 @@ def get_all_restaurant_info():
 @app.route('/user/goals', methods=['POST', 'GET'])
 def access_goals():
     """
+    If POST:
+        Given a JSON object with goal id, user id, and new status, 
+        updates user's goal status in database 
+    If GET:
+        Given a query parameter with user id, gets user's goal info from database
 
-    :return:
+    :return: if post: a JSON object with a success or error message; 
+    if get: a JSON object with a list of user's goals
     """
     if request.method == 'POST':
         return mng_goals.update_goals(request)
@@ -188,8 +194,10 @@ def access_goals():
 @app.route('/user/exists', methods=['GET'])
 def check_if_user_exists():
     """
+    Given a query parameter with user id, checks whether user id exists in database.
 
-    :return:
+    :return: a JSON object that has a true value if the id exists and 
+    a false value if it does not.
     """
     user_id = request.args.get('userId')
     exists = db.session.query(db.exists().where(User.userId == user_id)).scalar()
@@ -202,9 +210,10 @@ def check_if_user_exists():
 
 def update_timestamp(req):
     """
+    Helper function for access_timestamp()
 
-    :param req:
-    :return:
+    :param req: request object
+    :return: a JSON object with a success or error message 
     """
     try:
         ts_schema = {
