@@ -13,9 +13,11 @@ from app import mng_goals
 
 @app.route('/register', methods=['POST'])
 def register():
-    """
+    """ 
+        Given a JSON object with user email, password, restaurant name, 
+        and restaurant location, attempts to register users in the database.
 
-    :return:
+    :return: a JSON object with success or error message
     """
     try:
         reg_schema = {
@@ -60,8 +62,11 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     """
+    Given a JSON object with user email and password, validates user in database and 
+    attempts to log in users.
 
-    :return:
+    :return: if successful, a JSON object with a jwt token and user id; 
+    else, a JSON object with an error message
     """
     try:
         lgn_schema = {
@@ -99,8 +104,9 @@ def login():
 @app.route('/user/restaurant-info', methods=['GET'])
 def get_user_restaurant_info():
     """
+    Given a user id as a query parameter, gets restaurant information for the user.
 
-    :return:
+    :return: JSON object with restaurant name and location
     """
     user_id = request.args.get('userId')
     print(user_id)
@@ -117,8 +123,9 @@ def get_user_restaurant_info():
 @app.route('/user/report', methods=['GET'])
 def get_report():
     """
+    Given a user id as a query parameter, gets a report with user sustainability progress info.
 
-    :return:
+    :return: JSON object with user score, category info and score, and goal info and status
     """
     user_id = request.args.get('userId')
     user_goals = mng_goals.get_user_goals(user_id)
@@ -128,8 +135,12 @@ def get_report():
 @app.route('/user/timestamp', methods=['POST', 'GET'])
 def access_timestamp():
     """
+    If POST:
+        given JSON object with user id and timestamp, update the timestamp field in the database
+    If GET:
+        given a user id, get timestamp field from database
 
-    :return:
+    :return: if post: a JSON object with a success or error message; if get: a JSON object with timestamp
     """
     if request.method == 'POST':
         return update_timestamp(request)
@@ -142,8 +153,9 @@ def access_timestamp():
 @app.route('/restaurants', methods=['GET'])
 def get_all_restaurant_info():
     """
+    Gets a list of all restaurant info from the database
 
-    :return:
+    :return: a JSON object with a list of restaurant names, restaurant locations, and user ids
     """
     restaurants = User.query \
         .join(Restaurant, Restaurant.restaurantId == User.restaurantId) \
