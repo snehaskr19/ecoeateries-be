@@ -3,6 +3,8 @@
 """
 from app import db
 from app.models import User, Restaurant, Goal, Category, Connector
+import jsonschema
+from flask import jsonify
 
 
 def update_goals(req):
@@ -38,7 +40,18 @@ def update_goals(req):
     return jsonify({"error", "invalid request"})
 
 
-def get_goals(req):
+def get_all_goals():
+    """
+
+    :return:
+    """
+    return Goal.query \
+        .join(Category, Goal.categoryId == Category.categoryId) \
+        .add_columns(Goal.goalId, Goal.goalName, Category.categoryName) \
+        .all()
+
+
+def get_user_goals(req):
     """
 
     :param req:
@@ -46,12 +59,7 @@ def get_goals(req):
     """
     user_id = req.args.get('userId')
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-    goals = Connector.query \
-        .filter_by(restaurantId=restaurant_id) \
-        .join(Goal, Goal.goalId == Connector.goalId) \
-        .join(Category, Goal.categoryId == Category.categoryId) \
-        .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName) \
-        .all()
+    goals = query_user_goals(restaurant_id)
     goal_list = []
     for goal in goals:
         goal_dict = {
@@ -64,36 +72,33 @@ def get_goals(req):
     return jsonify({'goalList': goal_list})
 
 
-def get_all_goals():
+def query_user_goals(restaurant_id):
     """
-
+    Fetches all user goals from the DB
+    :param restaurant_id:
     :return:
     """
-    return Goal.query \
-        .join(Category, Goal.categoryId == Category.categoryId) \
-        .add_columns(Goal.goalId, Goal.goalName, Category.categoryName) \
-        .all()
-
-
-def get_user_goals(user_id):
-    """
-
-    :param user_id:
-    :return:
-    """
-    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
-
-    print("restaurantid: ", restaurant_id)
-    restaurant_name = Restaurant.query.filter_by(restaurantId=restaurant_id).first().restaurantName
-    print("restaurantname: ", restaurant_name)
-
     goals = Connector.query \
         .filter_by(restaurantId=restaurant_id) \
         .join(Goal, Goal.goalId == Connector.goalId) \
         .join(Category, Goal.categoryId == Category.categoryId) \
         .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName, Category.categoryId) \
         .all()
+    return goals
 
+
+def generate_goal_report(user_id):
+    """
+
+    :param user_id:
+    :return:
+    """
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+    print("restaurantid: ", restaurant_id)
+    restaurant_name = Restaurant.query.filter_by(restaurantId=restaurant_id).first().restaurantName
+    print("restaurantname: ", restaurant_name)
+
+    goals = query_user_goals(restaurant_id)
     print("goals: ", goals)
 
     goals_per_category = {}
