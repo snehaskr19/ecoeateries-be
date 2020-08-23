@@ -8,7 +8,8 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 import jsonschema
 
 
-@app.route('/users/register', methods=['POST'])
+# @app.route('/users/register', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register():
     try:
         reg_schema = {
@@ -50,7 +51,8 @@ def register():
         return jsonify({"error", "cannot register user"})
 
 
-@app.route('/users/login', methods=['POST'])
+# @app.route('/users/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login():
     try:
         lgn_schema = {
@@ -106,7 +108,7 @@ def get_report():
     return jsonify(mng_goals.get_score_report(user_goals))
 
 
-@app.route('/user/timestamp', methods=['POST', 'GET'])
+@app.route('/timestamp', methods=['POST', 'GET'])
 def access_timestamp():
     if request.method == 'POST':
         return update_timestamp(request)
