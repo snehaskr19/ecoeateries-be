@@ -82,7 +82,7 @@ def query_user_goals(restaurant_id):
         .filter_by(restaurantId=restaurant_id) \
         .join(Goal, Goal.goalId == Connector.goalId) \
         .join(Category, Goal.categoryId == Category.categoryId) \
-        .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName, Category.categoryId) \
+        .add_columns(Goal.goalName, Goal.goalId, Goal.points, Connector.status, Category.categoryName, Category.categoryId) \
         .all()
     return goals
 
@@ -107,7 +107,8 @@ def generate_goal_report(user_id):
         goal_dict = {
             'goalName': goal.goalName,
             'goalId': goal.goalId,
-            'goalStatus': str(goal.status)
+            'goalStatus': str(goal.status),
+            'goalPoints': goal.points
         }
         if goal.categoryName in goals_per_category.keys():
             goals_per_category[goal.categoryName][1].append(goal_dict)
@@ -141,8 +142,8 @@ def get_score_report(score_report):
         category_score = 0
         for goal in goals:
             num_goals += 1
-            category_score += float(goal['goalStatus'])
-        category_percent = (category_score / num_goals) * 100
+            category_score += float(goal['goalStatus']) * goal['goalPoints']
+        category_percent = (category_score / 20) * 100
         category['categoryScore'] = category_percent
         total_score += category_percent
     total_score_percent = total_score / len(categories)
