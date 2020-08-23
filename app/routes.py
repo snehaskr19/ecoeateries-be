@@ -128,8 +128,8 @@ def get_report():
     :return: JSON object with user score, category info and score, and goal info and status
     """
     user_id = request.args.get('userId')
-    user_goals = mng_goals.get_user_goals(user_id)
-    return jsonify(mng_goals.get_score_report(user_goals))
+    goal_report = mng_goals.generate_goal_report(user_id)
+    return jsonify(mng_goals.get_score_report(goal_report))
 
 
 @app.route('/user/timestamp', methods=['POST', 'GET'])
@@ -182,7 +182,7 @@ def access_goals():
     if request.method == 'POST':
         return mng_goals.update_goals(request)
     else:
-        return mng_goals.get_goals(request)
+        return mng_goals.get_user_goals(request)
 
 
 @app.route('/user/exists', methods=['GET'])
