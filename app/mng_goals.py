@@ -2,8 +2,6 @@
 
 """
 from app import db
-from flask import jsonify
-import jsonschema
 from app.models import User, Restaurant, Goal, Category, Connector
 import jsonschema
 from flask import jsonify
