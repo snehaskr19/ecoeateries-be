@@ -1,9 +1,74 @@
-from app import app
+"""
+
+"""
 from app import db
 from app.models import User, Restaurant, Goal, Category, Connector
 
 
+def update_goals(req):
+    """
+
+    :param req:
+    :return:
+    """
+    try:
+        status_schema = {
+            "type": "object",
+            "properties": {
+                "goalId": {"type": "number"},
+                "userId": {"type": "number"},
+                "newStatus": {"type": "string"}
+            },
+        }
+        request_json = req.json
+        jsonschema.validate(instance=request_json, schema=status_schema)
+        user_id = request_json['userId']
+        goal_id = request_json['goalId']
+        new_status = request_json['newStatus']
+        restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+        connector = Connector.query.filter_by(restaurantId=restaurant_id, goalId=goal_id).first()
+        connector.status = float(new_status)
+        db.session.add(connector)
+        db.session.commit()
+        return jsonify(
+            {'message': 'goal successfully updated'}
+        )
+    except jsonschema.exceptions.ValidationError as err:
+        print(err)
+    return jsonify({"error", "invalid request"})
+
+
+def get_goals(req):
+    """
+
+    :param req:
+    :return:
+    """
+    user_id = req.args.get('userId')
+    restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
+    goals = Connector.query \
+        .filter_by(restaurantId=restaurant_id) \
+        .join(Goal, Goal.goalId == Connector.goalId) \
+        .join(Category, Goal.categoryId == Category.categoryId) \
+        .add_columns(Goal.goalName, Goal.goalId, Connector.status, Category.categoryName) \
+        .all()
+    goal_list = []
+    for goal in goals:
+        goal_dict = {
+            'goalName': goal.goalName,
+            'goalId': goal.goalId,
+            'goalStatus': str(goal.status),
+            'goalCategory': goal.categoryName
+        }
+        goal_list.append(goal_dict)
+    return jsonify({'goalList': goal_list})
+
+
 def get_all_goals():
+    """
+
+    :return:
+    """
     return Goal.query \
         .join(Category, Goal.categoryId == Category.categoryId) \
         .add_columns(Goal.goalId, Goal.goalName, Category.categoryName) \
@@ -11,6 +76,11 @@ def get_all_goals():
 
 
 def get_user_goals(user_id):
+    """
+
+    :param user_id:
+    :return:
+    """
     restaurant_id = User.query.filter_by(userId=user_id).first().restaurantId
 
     print("restaurantid: ", restaurant_id)
@@ -26,22 +96,22 @@ def get_user_goals(user_id):
 
     print("goals: ", goals)
 
-    goalsPerCategory = {}
+    goals_per_category = {}
 
     for goal in goals:
-        goalDict = {
+        goal_dict = {
             'goalName': goal.goalName,
             'goalId': goal.goalId,
             'goalStatus': str(goal.status)
         }
-        if goal.categoryName in goalsPerCategory.keys():
-            goalsPerCategory[goal.categoryName][1].append(goalDict)
+        if goal.categoryName in goals_per_category.keys():
+            goals_per_category[goal.categoryName][1].append(goal_dict)
         else:
-            goalsPerCategory[goal.categoryName] = [goal.categoryId, [goalDict]]
+            goals_per_category[goal.categoryName] = [goal.categoryId, [goal_dict]]
 
     categories = []
 
-    for key, val in goalsPerCategory.items():
+    for key, val in goals_per_category.items():
         category_dict = {
             'categoryName': key,
             'categoryId': val[0],
@@ -53,6 +123,11 @@ def get_user_goals(user_id):
 
 
 def get_score_report(score_report):
+    """
+
+    :param score_report:
+    :return:
+    """
     categories = score_report['categories']
     total_score = 0
     for category in categories:

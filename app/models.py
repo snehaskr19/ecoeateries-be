@@ -1,7 +1,13 @@
+"""
+
+"""
 from app import db
 
 
 class User(db.Model):
+    """
+
+    """
     __tablename__ = 'users'
     __table_args__ = {
         'autoload': True,
@@ -10,6 +16,9 @@ class User(db.Model):
 
 
 class Category(db.Model):
+    """
+
+    """
     __tablename__ = 'categories'
     __table_args__ = {
         'autoload': True,
@@ -18,6 +27,9 @@ class Category(db.Model):
 
 
 class Connector(db.Model):
+    """
+
+    """
     __tablename__ = 'connector'
     __table_args__ = {
         'autoload': True,
@@ -26,6 +38,9 @@ class Connector(db.Model):
 
 
 class Goal(db.Model):
+    """
+
+    """
     __tablename__ = 'goals'
     __table_args__ = {
         'autoload': True,
@@ -34,6 +49,9 @@ class Goal(db.Model):
 
 
 class Restaurant(db.Model):
+    """
+
+    """
     __tablename__ = 'restaurants'
     __table_args__ = {
         'autoload': True,
