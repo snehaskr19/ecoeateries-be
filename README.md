@@ -1,2 +1,2 @@
 # hftp-backend
-Frontend Repo: https://github.com/daniaalnahdi/hftp-frontend
+Frontend Repo: https://github.com/daniaalnahdi/ecoeateries-fe
